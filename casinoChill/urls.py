@@ -28,10 +28,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/memberships/', include('memberships.urls')),
-    path('api/players/', include('players.urls')),
-    path('api/games/', include('games.urls')),
-    path('api/auth/', include('authentication.urls')),
+    path('api/memberships/', include('backend.apps.memberships.urls')),
+    path('api/players/', include('backend.apps.players.urls')),
+    path('api/games/', include('backend.apps.games.urls')),
+    path('api/auth/', include('backend.apps.authentication.urls')),
 ]
 
 if settings.DEBUG:

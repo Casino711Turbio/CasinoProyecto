@@ -42,10 +42,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     # Mis aplicaciones
-    'players',
-    'games',
-    'memberships',
-    'authentication',
+    'backend.apps.players',
+    'backend.apps.games',
+    'backend.apps.memberships',
+    'backend.apps.authentication',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
