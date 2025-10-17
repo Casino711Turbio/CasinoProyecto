@@ -1,13 +1,13 @@
-from rest_framework import generics, status, views
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from players.models import Player
 from memberships.models import Membership
 from players.serializers import PlayerSerializer
-from django.http import JsonResponse
-import bcrypt
 
 class RegisterView(generics.CreateAPIView):
+    authentication_classes = []  # IMPORTANTE: Desactiva la autenticación
+    permission_classes = [permissions.AllowAny]  # IMPORTANTE: Permite acceso sin autenticación
 
     def post(self, request):
         try:
@@ -48,6 +48,3 @@ class RegisterView(generics.CreateAPIView):
                 {'error': str(e)}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-def index(request):
-    return JsonResponse({"message": "Auth API funcionando ✅"})

@@ -2,8 +2,11 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Player
 from memberships.serializers import MembershipSerializer
+import qrcode
+from io import BytesIO
+from django.core.files import File
+import os
 
-# Serializer para el User de Django (para manejar el username y password)
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -17,15 +20,14 @@ class UserSerializer(serializers.ModelSerializer):
         )
         return user
 
-# Serializer para el modelo Player
 class PlayerSerializer(serializers.ModelSerializer):
-    user = UserSerializer()  # Anidamos el UserSerializer
-    membership = MembershipSerializer(read_only=True)  # Solo lectura para la membresía
-
+    user = UserSerializer()
+    membership = MembershipSerializer(read_only=True)
+    
     class Meta:
         model = Player
         fields = '__all__'
-        read_only_fields = ('qr_code', 'join_date')
+        read_only_fields = ('qr_code', 'join_date', 'balance')
 
     def create(self, validated_data):
         # Extraer datos del usuario
@@ -38,29 +40,71 @@ class PlayerSerializer(serializers.ModelSerializer):
         else:
             raise serializers.ValidationError(user_serializer.errors)
         
-        # Crear jugador
-        player = Player.objects.create(user=user, **validated_data)
+        # Obtener membresía Free por defecto
+        from memberships.models import Membership
+        free_membership = Membership.objects.filter(name='Free').first()
+        if not free_membership:
+            # Si no existe, crear una
+            free_membership = Membership.objects.create(
+                name='Free',
+                description='Membresía básica gratuita',
+                benefits='Acceso a juegos básicos, promociones limitadas'
+            )
         
-        # Generar código QR
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
+        # Crear jugador (sin guardar aún)
+        player = Player(
+            user=user,
+            membership=free_membership,
+            **validated_data
         )
-        qr.add_data(f"player:{player.id}")
-        qr.make(fit=True)
         
-        img = qr.make_image(fill_color="black", back_color="white")
-        
-        # Guardar imagen QR
-        buffer = BytesIO()
-        img.save(buffer, format='PNG')
-        
-        player.qr_code.save(f'qr_{player.id}.png', File(buffer), save=True)
+        # Guardar el jugador para obtener un ID
         player.save()
         
+        # Generar código QR DESPUÉS de guardar (para tener el ID)
+        self.generate_qr_code(player)
+        
         return player
+
+    def generate_qr_code(self, player):
+        """Genera y guarda el código QR para un jugador"""
+        try:
+            # Crear datos del QR
+            qr_data = f"player:{player.id}"
+            print(f"Generando QR para jugador {player.id} con datos: {qr_data}")
+            
+            # Generar QR
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(qr_data)
+            qr.make(fit=True)
+            
+            # Crear imagen
+            qr_image = qr.make_image(fill_color="black", back_color="white")
+            
+            # Guardar en buffer
+            buffer = BytesIO()
+            qr_image.save(buffer, format='PNG')
+            buffer.seek(0)  # Volver al inicio del buffer
+            
+            # Crear nombre de archivo
+            filename = f'qr_player_{player.id}.png'
+            print(f"Guardando QR como: {filename}")
+            
+            # Guardar archivo
+            player.qr_code.save(filename, File(buffer), save=False)
+            player.save()  # Guardar explícitamente
+            
+            print(f"QR guardado exitosamente en: {player.qr_code.url}")
+            
+        except Exception as e:
+            print(f"Error generando QR: {e}")
+            import traceback
+            traceback.print_exc()
 
     def update(self, instance, validated_data):
         # Manejar actualización de usuario si se proporciona

@@ -13,11 +13,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import os
-
+import logging
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
+logging.basicConfig(level=logging.DEBUG)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -154,6 +154,11 @@ SIMPLE_JWT = {
 # Media files (QR codes)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Crear directorios necesarios
+QR_CODE_DIR = os.path.join(MEDIA_ROOT, 'qrcodes')
+if not os.path.exists(QR_CODE_DIR):
+    os.makedirs(QR_CODE_DIR)
 
 # Crear directorio media si no existe
 if not os.path.exists(MEDIA_ROOT):
