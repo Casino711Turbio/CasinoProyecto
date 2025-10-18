@@ -41,11 +41,13 @@ INSTALLED_APPS = [
     # Aplicaciones de terceros
     'rest_framework',
     'corsheaders',
+    'django_filters',
     # Mis aplicaciones
     'backend.apps.players',
-    'backend.apps.games',
     'backend.apps.memberships',
+    'backend.apps.games',
     'backend.apps.authentication',
+    'backend.apps.transactions',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -140,6 +142,11 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
     ],
 }
 

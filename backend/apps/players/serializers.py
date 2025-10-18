@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Player
-from backend.apps.memberships.serializers import MembershipSerializer
+from backend.apps.memberships.serializers import PlayerMembershipSerializer
 import qrcode
 from io import BytesIO
 from django.core.files import File
@@ -22,7 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class PlayerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-    membership = MembershipSerializer(read_only=True)
+    membership = PlayerMembershipSerializer(source='player_membership', read_only=True) 
     
     class Meta:
         model = Player

@@ -2,15 +2,13 @@ import qrcode
 from io import BytesIO
 from django.core.files import File
 from django.db import models
-from django.contrib.auth.models import User
-from backend.apps.memberships.models import Membership
+from django.contrib.auth.models import User 
 
 class Player(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     join_date = models.DateTimeField(auto_now_add=True)
-    membership = models.ForeignKey(Membership, on_delete=models.SET_NULL, null=True, default=None)
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     qr_code = models.ImageField(upload_to='qrcodes/', blank=True, null=True)
 
@@ -26,7 +24,8 @@ class Player(models.Model):
                 box_size=10,
                 border=4,
             )
-            qr_data = f"PlayerID:{self.id}" if self.id else "PlayerID:New"
+            # Usar datos más significativos para el QR
+            qr_data = f"Player:{self.user.username}|Name:{self.name} {self.last_name}" if self.id else "Player:New"
             qr.add_data(qr_data)
             qr.make(fit=True)
 
@@ -36,6 +35,8 @@ class Player(models.Model):
             img.save(buffer, format='PNG')
             buffer.seek(0)
 
-            self.qr_code.save(f'qr_{self.id}.png', File(buffer), save=False)
+            # Solo guardar si tenemos un ID
+            if self.id:
+                self.qr_code.save(f'qr_{self.id}.png', File(buffer), save=False)
 
         super().save(*args, **kwargs)
