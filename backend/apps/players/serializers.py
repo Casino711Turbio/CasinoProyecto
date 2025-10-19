@@ -22,7 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class PlayerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-    membership = PlayerMembershipSerializer(source='player_membership', read_only=True) 
+    #membership = PlayerMembershipSerializer(source='player_membership', read_only=True) 
     
     class Meta:
         model = Player

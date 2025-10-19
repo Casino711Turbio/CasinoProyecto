@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/players/', include('backend.apps.players.urls')),
     path('api/games/', include('backend.apps.games.urls')),
     path('api/auth/', include('backend.apps.authentication.urls')),
+    path('api/transactions/', include('backend.apps.transactions.urls')),
 ]
 
 if settings.DEBUG:

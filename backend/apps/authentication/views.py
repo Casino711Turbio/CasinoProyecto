@@ -2,12 +2,14 @@ from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from backend.apps.players.models import Player
-from backend.apps.memberships.models import Membership
+from backend.apps.memberships.models import MembershipPlan, Membership
 from backend.apps.players.serializers import PlayerSerializer
+from django.utils import timezone
+from datetime import timedelta
 
 class RegisterView(generics.CreateAPIView):
-    authentication_classes = []  # IMPORTANTE: Desactiva la autenticación
-    permission_classes = [permissions.AllowAny]  # IMPORTANTE: Permite acceso sin autenticación
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         try:
@@ -29,15 +31,35 @@ class RegisterView(generics.CreateAPIView):
                 password=password
             )
             
-            # Obtener membresía Free por defecto
-            free_membership = Membership.objects.get(name='Free')
+            # ✅ CORREGIDO: Obtener plan Free por defecto (bronze)
+            free_plan = MembershipPlan.objects.filter(tier='bronze').first()
+            if not free_plan:
+                # Si no existe, crear un plan básico
+                free_plan = MembershipPlan.objects.create(
+                    name="Plan Básico",
+                    tier="bronze",
+                    description="Plan gratuito para nuevos jugadores",
+                    benefits={"juegos_basicos": True},
+                    min_balance=0,
+                    min_monthly_volume=0,
+                    valid_from=timezone.now(),
+                    is_active=True
+                )
             
-            # Crear jugador
+            # ✅ CORREGIDO: Crear jugador (sin membership en el constructor)
             player = Player.objects.create(
                 user=user,
                 name=name,
-                last_name=last_name,
-                membership=free_membership
+                last_name=last_name
+                
+            )
+            
+            # ✅ CORREGIDO: Crear membresía para el jugador
+            membership = Membership.objects.create(
+                player=player,
+                plan=free_plan,
+                expires_at=timezone.now() + timedelta(days=30),  # 30 días de membresía
+                is_active=True
             )
             
             serializer = PlayerSerializer(player)
