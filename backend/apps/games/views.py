@@ -1,8 +1,8 @@
-# views.py completo y corregido
 from rest_framework import viewsets, generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
-from django.db import transaction
+from django.db import transaction, models
+from django.db.models import F  # Added F expression
 from django.utils import timezone
 from decimal import Decimal
 from .models import Game, GameSession
@@ -27,7 +27,7 @@ class GameViewSet(viewsets.ModelViewSet):
             game = self.get_object()
             player = Player.objects.get(user=request.user)
             
-            # Convertir a Decimal en lugar de float
+            # Convertir a Decimal
             bet_amount = Decimal(str(request.data.get('bet_amount', 0)))
 
             if bet_amount <= Decimal('0'):
@@ -36,7 +36,8 @@ class GameViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            if player.balance < bet_amount:
+            # Verificar saldo de forma atómica
+            if not Player.objects.filter(id=player.id, balance__gte=bet_amount).exists():
                 return Response(
                     {'error': 'Saldo insuficiente'}, 
                     status=status.HTTP_400_BAD_REQUEST
@@ -46,14 +47,22 @@ class GameViewSet(viewsets.ModelViewSet):
             if random.choice([True, False]):
                 # Ganar: doble del monto apostado
                 amount_won = bet_amount * Decimal('2')
-                player.balance += amount_won
+                
+                # Actualizar balance de forma atómica (restar apuesta + sumar ganancia)
+                Player.objects.filter(id=player.id).update(
+                    balance=F('balance') - bet_amount + amount_won
+                )
                 result = 'won'
             else:
                 amount_won = Decimal('0')
-                player.balance -= bet_amount
+                # Restar apuesta de forma atómica
+                Player.objects.filter(id=player.id).update(
+                    balance=F('balance') - bet_amount
+                )
                 result = 'lost'
 
-            player.save()
+            # Obtener el jugador actualizado
+            player.refresh_from_db()
 
             # Crear GameSession
             game_session = GameSession.objects.create(
@@ -67,10 +76,10 @@ class GameViewSet(viewsets.ModelViewSet):
 
             return Response({
                 'result': result,
-                'amount_won': float(amount_won),  # Convertir a float solo para la respuesta
-                'new_balance': float(player.balance),
+                'amount_won': str(amount_won),  # Mantener como string
+                'new_balance': str(player.balance),  # Mantener como string
                 'game_session_id': game_session.id,
-                'message': f'¡{"Ganaste" if result == "won" else "Perdiste"} ${float(amount_won):.2f}!'
+                'message': f'¡{"Ganaste" if result == "won" else "Perdiste"} ${amount_won:.2f}!'
             })
 
         except Player.DoesNotExist:
@@ -159,9 +168,9 @@ def player_game_history(request):
                 'total_games': total_games,
                 'games_won': games_won,
                 'win_rate': round((games_won / total_games * 100), 2) if total_games > 0 else 0,
-                'total_wagered': float(total_wagered),
-                'total_won': float(total_won),
-                'net_profit': float(total_won - total_wagered)
+                'total_wagered': str(total_wagered),  # Mantener como string
+                'total_won': str(total_won),  # Mantener como string
+                'net_profit': str(total_won - total_wagered)  # Mantener como string
             }
         })
     
@@ -203,12 +212,16 @@ def end_game_session(request, session_id):
         game_session.result = request.data.get('result', 'completed')
         game_session.amount_won = amount_won
         
-        if not game_session.result:
-            net_change = amount_won - game_session.bet_amount
-            player.balance += net_change
-            player.save()
+        # Calcular cambio neto y actualizar balance de forma atómica
+        net_change = amount_won - game_session.bet_amount
+        Player.objects.filter(id=player.id).update(
+            balance=F('balance') + net_change
+        )
         
         game_session.save()
+        
+        # Obtener jugador actualizado
+        player.refresh_from_db()
         
         serializer = GameSessionSerializer(game_session)
         return Response(serializer.data)

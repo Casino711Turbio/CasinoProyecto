@@ -1,20 +1,28 @@
-# frontend/Dockerfile
-FROM node:16-alpine as build
+# Frontend Dockerfile
+FROM node:16-alpine as builder
 
+# Establecer directorio de trabajo CORRECTO
 WORKDIR /app
 
-# Copiar package.json e instalar dependencias
-COPY package*.json ./
-RUN npm ci --only=production
+# Copiar package.json desde la ubicación correcta
+COPY casino-frontend/package*.json ./
 
-# Copiar código y construir
-COPY . .
+RUN npm install
+
+# Copiar el código fuente desde la subcarpeta
+COPY casino-frontend/ .
+
 RUN npm run build
 
-# Stage de producción
+# Etapa de producción
 FROM nginx:alpine
-COPY --from=build /app/build /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copiar los archivos construidos
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Copiar configuración de nginx si es necesaria
+# COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]

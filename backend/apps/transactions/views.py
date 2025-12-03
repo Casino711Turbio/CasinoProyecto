@@ -3,7 +3,8 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.db import transaction as db_transaction  # Renombrado para evitar conflicto
+from django.db import transaction as db_transaction, models  # Added models
+from django.db.models import F  # Added F expression
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
@@ -61,9 +62,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 **transaction_data
             )
             
-            # Actualizar balance del jugador
-            player.balance += amount
-            player.save()
+            # Actualizar balance del jugador de forma atómica
+            Player.objects.filter(id=player.id).update(
+                balance=F('balance') + amount
+            )
             
             # Actualizar límites
             self._update_limits(player, 'deposit', amount)
@@ -74,7 +76,13 @@ class TransactionViewSet(viewsets.ModelViewSet):
             transaction_obj.processed_by = request.user
             transaction_obj.save()
             
-            return Response(TransactionSerializer(transaction_obj).data)
+            # Obtener el jugador actualizado
+            player.refresh_from_db()
+            
+            return Response({
+                **TransactionSerializer(transaction_obj).data,
+                'new_balance': str(player.balance)  # Mantener como string para precisión
+            })
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -89,8 +97,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
             # Convertir amount a Decimal
             amount = Decimal(str(serializer.validated_data['amount']))
             
-            # Validar saldo suficiente
-            if player.balance < amount:
+            # Validar saldo suficiente de forma atómica
+            if not Player.objects.filter(id=player.id, balance__gte=amount).exists():
                 return Response(
                     {'error': 'Saldo insuficiente'}, 
                     status=status.HTTP_400_BAD_REQUEST
@@ -121,9 +129,19 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_202_ACCEPTED
                 )
             
-            # Procesar retiro inmediato
-            player.balance -= amount
-            player.save()
+            # Procesar retiro inmediato de forma atómica
+            updated = Player.objects.filter(
+                id=player.id, 
+                balance__gte=amount
+            ).update(
+                balance=F('balance') - amount
+            )
+            
+            if not updated:
+                return Response(
+                    {'error': 'Saldo insuficiente durante el procesamiento'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
             transaction_obj.status = 'completed'
             transaction_obj.processed_at = timezone.now()
@@ -133,12 +151,18 @@ class TransactionViewSet(viewsets.ModelViewSet):
             # Actualizar límites
             self._update_limits(player, 'withdrawal', amount)
             
-            return Response(TransactionSerializer(transaction_obj).data)
+            # Obtener el jugador actualizado
+            player.refresh_from_db()
+            
+            return Response({
+                **TransactionSerializer(transaction_obj).data,
+                'new_balance': str(player.balance)  # Mantener como string para precisión
+            })
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def _check_limits(self, player, transaction_type, amount):
-        """Validar límites de transacción"""
+        """Validar límites de transacción - MODO SEGURO"""
         today = timezone.now().date()
         
         try:
@@ -154,6 +178,13 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     'period_end': today + timedelta(days=1)
                 }
             )
+            
+            # Verificar si el período ha expirado y resetear si es necesario
+            if not created and daily_limit.period_end < today:
+                daily_limit.current_amount = Decimal('0')
+                daily_limit.period_start = today
+                daily_limit.period_end = today + timedelta(days=1)
+                daily_limit.save()
             
             if daily_limit.current_amount + amount > daily_limit.max_amount:
                 return False
@@ -175,45 +206,54 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 }
             )
             
+            # Verificar si el período mensual ha expirado
+            if not created and monthly_limit.period_end < today:
+                monthly_limit.current_amount = Decimal('0')
+                monthly_limit.period_start = month_start
+                monthly_limit.period_end = month_end
+                monthly_limit.save()
+            
             if monthly_limit.current_amount + amount > monthly_limit.max_amount:
                 return False
             
             return True
             
         except Exception as e:
-            # En caso de error, permitir la transacción
-            return True
+            # MODO SEGURO: En caso de error, rechazar la transacción
+            return False
 
     def _update_limits(self, player, transaction_type, amount):
-        """Actualizar límites de transacción"""
+        """Actualizar límites de transacción de forma atómica"""
         today = timezone.now().date()
         
         try:
-            # Actualizar límite diario
-            daily_limit = TransactionLimit.objects.get(
+            # Actualizar límite diario de forma atómica
+            daily_limit = TransactionLimit.objects.filter(
                 player=player,
                 period='daily',
                 transaction_type=transaction_type,
                 period_start__lte=today,
                 period_end__gte=today
             )
-            daily_limit.current_amount += amount
-            daily_limit.save()
             
-            # Actualizar límite mensual
+            if daily_limit.exists():
+                daily_limit.update(current_amount=F('current_amount') + amount)
+            
+            # Actualizar límite mensual de forma atómica
             month_start = today.replace(day=1)
-            monthly_limit = TransactionLimit.objects.get(
+            monthly_limit = TransactionLimit.objects.filter(
                 player=player,
                 period='monthly',
                 transaction_type=transaction_type,
                 period_start=month_start
             )
-            monthly_limit.current_amount += amount
-            monthly_limit.save()
             
-        except TransactionLimit.DoesNotExist:
-            # Si no existe el límite, crear uno nuevo
-            self._check_limits(player, transaction_type, amount)
+            if monthly_limit.exists():
+                monthly_limit.update(current_amount=F('current_amount') + amount)
+            
+        except Exception as e:
+            # Log the error but don't fail the transaction
+            pass
 
 
 class CancellationRequestViewSet(viewsets.ModelViewSet):
@@ -227,6 +267,7 @@ class CancellationRequestViewSet(viewsets.ModelViewSet):
         return CancellationRequest.objects.filter(requested_by=user).order_by('-created_at')
     
     @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    @db_transaction.atomic
     def authorize(self, request, pk=None):
         """Autorizar una cancelación"""
         cancellation = self.get_object()
@@ -242,14 +283,22 @@ class CancellationRequestViewSet(viewsets.ModelViewSet):
                 cancellation.status = 'approved'
                 cancellation.save()
                 
-                # Cancelar la transacción
+                # Cancelar la transacción de forma atómica
                 with db_transaction.atomic():
                     trans = cancellation.transaction
+                    player = trans.player
+                    
                     if trans.transaction_type == 'deposit':
-                        trans.player.balance -= trans.amount
+                        # Revertir depósito: restar del balance
+                        Player.objects.filter(id=player.id).update(
+                            balance=F('balance') - trans.amount
+                        )
                     elif trans.transaction_type == 'withdrawal':
-                        trans.player.balance += trans.amount
-                    trans.player.save()
+                        # Revertir retiro: sumar al balance
+                        Player.objects.filter(id=player.id).update(
+                            balance=F('balance') + trans.amount
+                        )
+                    
                     trans.status = 'cancelled'
                     trans.save()
                 
@@ -259,14 +308,20 @@ class CancellationRequestViewSet(viewsets.ModelViewSet):
             cancellation.status = 'approved'
             cancellation.save()
             
-            # Cancelar la transacción
+            # Cancelar la transacción de forma atómica
             with db_transaction.atomic():
                 trans = cancellation.transaction
+                player = trans.player
+                
                 if trans.transaction_type == 'deposit':
-                    trans.player.balance -= trans.amount
+                    Player.objects.filter(id=player.id).update(
+                        balance=F('balance') - trans.amount
+                    )
                 elif trans.transaction_type == 'withdrawal':
-                    trans.player.balance += trans.amount
-                trans.player.save()
+                    Player.objects.filter(id=player.id).update(
+                        balance=F('balance') + trans.amount
+                    )
+                
                 trans.status = 'cancelled'
                 trans.save()
             
@@ -324,10 +379,10 @@ class TransactionHistoryViewSet(viewsets.ReadOnlyModelViewSet):
                 'end_date': end_date
             },
             'summary': {
-                'total_deposits': float(sum(d.amount for d in deposits)),
-                'total_withdrawals': float(sum(w.amount for w in withdrawals)),
-                'total_wins': float(sum(win.amount for win in wins)),
-                'total_losses': float(sum(loss.amount for loss in losses)),
+                'total_deposits': str(sum(d.amount for d in deposits)),  # Mantener como string
+                'total_withdrawals': str(sum(w.amount for w in withdrawals)),
+                'total_wins': str(sum(win.amount for win in wins)),
+                'total_losses': str(sum(loss.amount for loss in losses)),
                 'transaction_count': queryset.count()
             }
         })

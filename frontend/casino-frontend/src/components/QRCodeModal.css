@@ -1,0 +1,109 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); /* Fondo oscuro semitransparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: #2d1b4e; /* Púrpura tarjeta */
+    border: 2px solid #d4af37; /* Borde dorado */
+    border-radius: 15px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #d4af37;
+    font-size: 1.2rem;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #a0a0a0;
+    font-size: 2rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: white;
+}
+
+.modal-body {
+    padding: 30px 20px;
+    text-align: center;
+}
+
+.scan-instruction {
+    color: #a0a0a0;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+.qr-container {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.qr-image {
+    width: 200px;
+    height: 200px;
+    display: block;
+}
+
+.player-name {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.modal-footer {
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-close-modal {
+    background: transparent;
+    border: 1px solid #d4af37;
+    color: #d4af37;
+    padding: 8px 25px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.btn-close-modal:hover {
+    background: #d4af37;
+    color: #1a0b2e;
+}

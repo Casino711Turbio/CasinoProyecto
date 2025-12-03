@@ -1,67 +1,81 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.db import transaction
 from .models import Player
 from backend.apps.memberships.serializers import PlayerMembershipSerializer
 import qrcode
 from io import BytesIO
 from django.core.files import File
-import os
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'username', 'password')
+        fields = ('id', 'username', 'email', 'password')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
         user = User.objects.create_user(
             username=validated_data['username'],
+            email=validated_data.get('email', ''),  # Añadir email
             password=validated_data['password']
         )
         return user
 
 class PlayerSerializer(serializers.ModelSerializer):
     user = UserSerializer()
-    #membership = PlayerMembershipSerializer(source='player_membership', read_only=True) 
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+    membership = PlayerMembershipSerializer(source='player_membership', read_only=True) 
     
     class Meta:
         model = Player
-        fields = '__all__'
+        fields = ['id', 'user', 'username', 'email', 'name', 'last_name', 'qr_code', 
+                 'join_date', 'balance', 'membership']
         read_only_fields = ('qr_code', 'join_date', 'balance')
 
+    @transaction.atomic
     def create(self, validated_data):
         # Extraer datos del usuario
         user_data = validated_data.pop('user')
         
-        # Crear usuario
-        user_serializer = UserSerializer(data=user_data)
-        if user_serializer.is_valid():
-            user = user_serializer.save()
-        else:
-            raise serializers.ValidationError(user_serializer.errors)
+        # Crear usuario con email
+        user = User.objects.create_user(
+            username=user_data['username'],
+            email=user_data.get('email', ''),
+            password=user_data['password']
+        )
         
         # Obtener membresía Free por defecto
-        from backend.apps.memberships.models import Membership
-        free_membership = Membership.objects.filter(name='Free').first()
-        if not free_membership:
-            # Si no existe, crear una
-            free_membership = Membership.objects.create(
+        from backend.apps.memberships.models import MembershipPlan, Membership
+        free_plan = MembershipPlan.objects.filter(tier='bronze').first()
+        if not free_plan:
+            from django.utils import timezone
+            free_plan = MembershipPlan.objects.create(
                 name='Free',
+                tier='bronze',
                 description='Membresía básica gratuita',
-                benefits='Acceso a juegos básicos, promociones limitadas'
+                benefits='Acceso a juegos básicos',
+                min_balance=0,
+                min_monthly_volume=0,
+                valid_from=timezone.now(),
+                is_active=True
             )
         
-        # Crear jugador (sin guardar aún)
-        player = Player(
+        # Crear jugador
+        player = Player.objects.create(
             user=user,
-            membership=free_membership,
             **validated_data
         )
         
-        # Guardar el jugador para obtener un ID
-        player.save()
+        # Crear membresía para el jugador
+        Membership.objects.create(
+            player=player,
+            plan=free_plan,
+            expires_at=timezone.now() + timezone.timedelta(days=30),
+            is_active=True
+        )
         
-        # Generar código QR DESPUÉS de guardar (para tener el ID)
+        # Generar código QR
         self.generate_qr_code(player)
         
         return player
@@ -71,7 +85,6 @@ class PlayerSerializer(serializers.ModelSerializer):
         try:
             # Crear datos del QR
             qr_data = f"player:{player.id}"
-            print(f"Generando QR para jugador {player.id} con datos: {qr_data}")
             
             # Generar QR
             qr = qrcode.QRCode(
@@ -89,22 +102,16 @@ class PlayerSerializer(serializers.ModelSerializer):
             # Guardar en buffer
             buffer = BytesIO()
             qr_image.save(buffer, format='PNG')
-            buffer.seek(0)  # Volver al inicio del buffer
+            buffer.seek(0)
             
             # Crear nombre de archivo
             filename = f'qr_player_{player.id}.png'
-            print(f"Guardando QR como: {filename}")
             
             # Guardar archivo
-            player.qr_code.save(filename, File(buffer), save=False)
-            player.save()  # Guardar explícitamente
-            
-            print(f"QR guardado exitosamente en: {player.qr_code.url}")
+            player.qr_code.save(filename, File(buffer), save=True)
             
         except Exception as e:
             print(f"Error generando QR: {e}")
-            import traceback
-            traceback.print_exc()
 
     def update(self, instance, validated_data):
         # Manejar actualización de usuario si se proporciona
@@ -114,6 +121,8 @@ class PlayerSerializer(serializers.ModelSerializer):
             
             if 'username' in user_data:
                 user.username = user_data['username']
+            if 'email' in user_data:
+                user.email = user_data['email']
             if 'password' in user_data:
                 user.set_password(user_data['password'])
             

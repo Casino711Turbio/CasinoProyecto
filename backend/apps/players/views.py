@@ -1,13 +1,15 @@
 from rest_framework import viewsets, generics, status, permissions
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
+from django.db import transaction, models
+from django.db.models import F  # Added F expression
 from .models import Player
 from .serializers import PlayerSerializer
 import qrcode
 from io import BytesIO
 from django.core.files import File
 from django.shortcuts import get_object_or_404
-from decimal import Decimal  # Importación añadida
+from decimal import Decimal
 
 class PlayerViewSet(viewsets.ModelViewSet):
     """
@@ -47,9 +49,10 @@ class PlayerViewSet(viewsets.ModelViewSet):
             return Player.objects.none()
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @transaction.atomic
     def add_balance(self, request, pk=None):
         """
-        Agregar saldo a un jugador (solo admin o el propio jugador)
+        Agregar saldo a un jugador (solo admin o el propio jugador) - FORMA SEGURA
         """
         player = self.get_object()
         
@@ -61,25 +64,31 @@ class PlayerViewSet(viewsets.ModelViewSet):
             )
         
         amount = request.data.get('amount')
-        if amount is None or Decimal(amount) <= 0:  # Cambiado a Decimal
+        if amount is None or Decimal(amount) <= 0:
             return Response(
                 {'error': 'Monto inválido'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Usar Decimal en lugar de float
-        player.balance += Decimal(amount)
-        player.save()
+        # Actualizar balance de forma atómica
+        decimal_amount = Decimal(amount)
+        Player.objects.filter(id=player.id).update(
+            balance=F('balance') + decimal_amount
+        )
+        
+        # Obtener el jugador actualizado
+        player.refresh_from_db()
         
         return Response({
-            'message': f'Se agregaron ${float(amount):.2f} al saldo',
-            'new_balance': float(player.balance)
+            'message': f'Se agregaron ${decimal_amount:.2f} al saldo',
+            'new_balance': str(player.balance)  # Mantener como string para precisión
         })
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @transaction.atomic
     def withdraw_balance(self, request, pk=None):
         """
-        Retirar saldo de un jugador (solo admin o el propio jugador)
+        Retirar saldo de un jugador (solo admin o el propio jugador) - FORMA SEGURA
         """
         player = self.get_object()
         
@@ -91,25 +100,34 @@ class PlayerViewSet(viewsets.ModelViewSet):
             )
         
         amount = request.data.get('amount')
-        if amount is None or Decimal(amount) <= 0:  # Cambiado a Decimal
+        if amount is None or Decimal(amount) <= 0:
             return Response(
                 {'error': 'Monto inválido'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        if player.balance < Decimal(amount):  # Cambiado a Decimal
+        decimal_amount = Decimal(amount)
+        
+        # Verificar saldo y retirar de forma atómica
+        updated = Player.objects.filter(
+            id=player.id, 
+            balance__gte=decimal_amount
+        ).update(
+            balance=F('balance') - decimal_amount
+        )
+        
+        if not updated:
             return Response(
                 {'error': 'Saldo insuficiente'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # Usar Decimal en lugar de float
-        player.balance -= Decimal(amount)
-        player.save()
+        # Obtener el jugador actualizado
+        player.refresh_from_db()
         
         return Response({
-            'message': f'Se retiraron ${float(amount):.2f} del saldo',
-            'new_balance': float(player.balance)
+            'message': f'Se retiraron ${decimal_amount:.2f} del saldo',
+            'new_balance': str(player.balance)  # Mantener como string para precisión
         })
 
     @action(detail=True, methods=['get'], permission_classes=[permissions.IsAuthenticated])
@@ -126,7 +144,7 @@ class PlayerViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        return Response({'balance': float(player.balance)})
+        return Response({'balance': str(player.balance)})  # Mantener como string
     
     @action(detail=True, methods=['get'], permission_classes=[permissions.AllowAny])
     def qr_code(self, request, pk=None):
@@ -185,9 +203,10 @@ def scan_qr(request):
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
+@transaction.atomic
 def update_balance(request, player_id):
     """
-    Endpoint para actualizar el saldo de un jugador (requiere autenticación)
+    Endpoint para actualizar el saldo de un jugador (requiere autenticación) - FORMA SEGURA
     """
     try:
         player = get_object_or_404(Player, id=player_id)
@@ -199,29 +218,39 @@ def update_balance(request, player_id):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Convertir a Decimal en lugar de float
+        # Convertir a Decimal
         amount = Decimal(str(request.data.get('amount', 0)))
         action_type = request.data.get('action', 'add')  # 'add' o 'subtract'
         
         if action_type == 'add':
-            player.balance += amount
-            message = f'Se agregaron ${float(amount):.2f} al saldo'
+            # Actualizar de forma atómica
+            Player.objects.filter(id=player.id).update(
+                balance=F('balance') + amount
+            )
+            message = f'Se agregaron ${amount:.2f} al saldo'
         elif action_type == 'subtract':
-            if player.balance >= amount:
-                player.balance -= amount
-                message = f'Se retiraron ${float(amount):.2f} del saldo'
-            else:
+            # Verificar saldo y restar de forma atómica
+            updated = Player.objects.filter(
+                id=player.id, 
+                balance__gte=amount
+            ).update(
+                balance=F('balance') - amount
+            )
+            
+            if not updated:
                 return Response(
                     {'error': 'Saldo insuficiente'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            message = f'Se retiraron ${amount:.2f} del saldo'
         else:
             return Response(
                 {'error': 'Acción inválida'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        player.save()
+        # Obtener el jugador actualizado
+        player.refresh_from_db()
         serializer = PlayerSerializer(player)
         
         return Response({
@@ -244,7 +273,7 @@ def my_balance(request):
     try:
         player = Player.objects.get(user=request.user)
         return Response({
-            'balance': float(player.balance),
+            'balance': str(player.balance),  # Mantener como string para precisión
             'player_name': f"{player.name} {player.last_name}"
         })
     except Player.DoesNotExist:
