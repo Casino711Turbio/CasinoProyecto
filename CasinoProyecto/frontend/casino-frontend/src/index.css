@@ -1,0 +1,52 @@
+:root {
+  --color-bg-dark: #1a0b2e;       /* Púrpura muy oscuro de fondo */
+  --color-bg-card: #2d1b4e;       /* Púrpura para tarjetas */
+  --color-gold: #d4af37;          /* Dorado lujoso */
+  --color-gold-hover: #f1c40f;    /* Dorado más brillante */
+  --color-red: #c41e3a;           /* Rojo acento (botones primarios) */
+  --color-text-main: #ffffff;
+  --color-text-muted: #a0a0a0;
+  --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-main);
+  background-color: var(--color-bg-dark);
+  background-image: radial-gradient(circle at 50% 50%, #2a1245 0%, #1a0b2e 100%); /* Efecto viñeta */
+  color: var(--color-text-main);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+/* Clases de utilidad para botones estilo Casino */
+.btn-gold-outline {
+  border: 2px solid var(--color-gold);
+  color: var(--color-gold);
+  background: transparent;
+  padding: 10px 25px;
+  border-radius: 25px;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-gold-outline:hover {
+  background: var(--color-gold);
+  color: var(--color-bg-dark);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+}
+
+.btn-gold-solid {
+  background: linear-gradient(135deg, var(--color-gold) 0%, #b8860b 100%);
+  color: #000;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  text-transform: uppercase;
+  text-decoration: none;
+}

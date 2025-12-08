@@ -1,0 +1,95 @@
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+migrations/
+!migrations/__init__.py
+
+# Database
+*.sqlite3
+*.db
+db.sqlite3
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.dev
+
+# Media and static files - CORREGIDO
+/media/*
+!/media/.gitkeep
+/staticfiles/
+/static/*
+!/static/.gitkeep
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python
+*.egg-info/
+.python-version
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Logs
+logs/
+*.log
+
+# Backup files
+*.bak
+*.backup
+
+# Temporary files
+*.tmp
+*.temp
+
+# Project specific
+/qrcodes/
+/debug.log
+/instance/
+
+# Django production
+/static_root/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Redis
+dump.rdb
+
+# Node.js (si usas React frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

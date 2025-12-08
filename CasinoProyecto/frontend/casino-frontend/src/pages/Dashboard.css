@@ -1,0 +1,101 @@
+.dashboard-layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #1a0b2e; /* Fondo global */
+}
+
+.dashboard-content {
+    margin-left: 250px; /* IMPORTANTE: Deja espacio para el Sidebar fijo */
+    padding: 40px;
+    width: 100%;
+    color: white;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 20px;
+}
+
+.top-cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.dashboard-card {
+    background: #2d1b4e;
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.balance-card {
+    background: radial-gradient(circle at top right, #3d2358 0%, #2d1b4e 100%);
+}
+
+.balance-amount {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #d4af37;
+    margin: 15px 0;
+}
+
+.membership-card {
+    border-color: #d4af37;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.status-badge {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.stat-widget {
+    background: rgba(255,255,255,0.03);
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    background: rgba(0,0,0,0.2);
+    padding: 10px;
+    border-radius: 50%;
+}
+
+.text-green { color: #2ecc71; }
+.text-red { color: #e74c3c; }
+
+.loading-screen {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #1a0b2e;
+    color: #d4af37;
+    font-size: 1.5rem;
+}

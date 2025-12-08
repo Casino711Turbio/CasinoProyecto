@@ -1,0 +1,65 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: casino_db
+      MYSQL_USER: casino_user
+      MYSQL_PASSWORD: casino_password
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - casino-network
+
+  backend:
+    # --- INICIO DE LA CORRECCIÓN ---
+    # El contexto (context) es la raíz del proyecto (.).
+    # Esto permite a Docker encontrar 'requirements.txt' en la raíz.
+    # Luego, especificamos la ruta al Dockerfile correcto (backend/apps/dockerfile).
+    build:
+      context: .
+      dockerfile: ./backend/apps/dockerfile
+    # --- FIN DE LA CORRECCIÓN ---
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DB_HOST=db
+      - DB_NAME=casino_db
+      - DB_USER=casino_user
+      - DB_PASSWORD=casino_password
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+    networks:
+      - casino-network
+
+  frontend:
+    # El contexto aquí también debería ser la raíz para que `frontend/Dockerfile`
+    # pueda acceder a cualquier archivo del proyecto si lo necesita.
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - casino-network
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - casino-network
+
+volumes:
+  db_data:
+
+networks:
+  casino-network:
+    driver: bridge
