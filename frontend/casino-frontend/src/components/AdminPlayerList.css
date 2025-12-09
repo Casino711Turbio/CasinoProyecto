@@ -1,0 +1,74 @@
+/* Hereda estructura del Dashboard, añadimos específicos */
+
+.admin-search-input {
+    padding: 10px 15px;
+    border-radius: 20px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    color: white;
+    width: 300px;
+}
+
+.admin-table-container {
+    background: #1e1e2e;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #ddd;
+}
+
+.admin-table th {
+    text-align: left;
+    padding: 15px;
+    background: #252535;
+    color: #aaa;
+    font-weight: 600;
+    border-bottom: 2px solid #333;
+}
+
+.admin-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #2a2a3a;
+}
+
+.admin-table tr:hover {
+    background: #2a2a3a;
+}
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    color: white;
+}
+
+.action-btn {
+    background: none;
+    border: 1px solid #555;
+    color: white;
+    padding: 5px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: #fff;
+    color: #000;
+}
+
+.edit-btn:hover {
+    background: #f1c40f; /* Amarillo editar */
+    border-color: #f1c40f;
+}
+
+.text-green { color: #2ecc71; }
+.no-data { text-align: center; padding: 30px; color: #666; font-style: italic; }
+.loading-text { text-align: center; color: #aaa; margin-top: 50px; }

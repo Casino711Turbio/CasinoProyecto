@@ -1,0 +1,134 @@
+/* Encabezado */
+.history-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+    padding-bottom: 15px;
+}
+
+.history-header h2 {
+    color: var(--color-gold);
+    margin: 0;
+    font-size: 2rem;
+}
+
+.history-subtitle {
+    color: #a0a0a0;
+    margin-top: 5px;
+}
+
+/* Tarjetas de Estadísticas */
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: var(--color-bg-card);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--color-gold);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    background: rgba(0, 0, 0, 0.2);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+}
+
+.stat-details h4 {
+    margin: 0;
+    color: #a0a0a0;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.stat-details p {
+    margin: 5px 0 0 0;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: white;
+}
+
+/* Tabla de Historial */
+.history-table-container {
+    background: var(--color-bg-card);
+    border-radius: 15px;
+    overflow: hidden; /* Para los bordes redondeados */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #e0e0e0;
+}
+
+.history-table th {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    text-align: left;
+    color: var(--color-gold);
+    font-weight: bold;
+    border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+}
+
+.history-table td {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.history-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.game-name-cell {
+    font-weight: 600;
+    color: white;
+}
+
+/* Badges de Resultado */
+.result-badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.result-badge.won {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    border: 1px solid #2ecc71;
+}
+
+.result-badge.lost {
+    background: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+}
+
+.text-green { color: #2ecc71; }
+.text-red { color: #e74c3c; }
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #a0a0a0;
+    font-style: italic;
+}

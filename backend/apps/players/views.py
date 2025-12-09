@@ -2,7 +2,7 @@ from rest_framework import viewsets, generics, status, permissions
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.db import transaction, models
-from django.db.models import F  # Added F expression
+from django.db.models import F
 from .models import Player
 from .serializers import PlayerSerializer
 import qrcode
@@ -174,6 +174,71 @@ class PlayerViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def my_balance_endpoint(self, request):
+        """
+        Obtener balance del jugador actual - Versión mejorada con más detalles
+        """
+        try:
+            player = Player.objects.get(user=request.user)
+            return Response({
+                'success': True,
+                'balance': str(player.balance),
+                'currency': player.currency,
+                'player_id': player.id,
+                'username': player.user.username,
+                'player_name': f"{player.name} {player.last_name}" if player.name and player.last_name else player.user.username
+            })
+        except Player.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'Jugador no encontrado',
+                'detail': 'No existe un perfil de jugador para este usuario'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': 'No se pudo obtener el balance',
+                'detail': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAuthenticated])
+    def my_full_profile(self, request):
+        """
+        Obtener perfil completo del jugador con todos los detalles
+        """
+        try:
+            player = Player.objects.get(user=request.user)
+            return Response({
+                'success': True,
+                'id': player.id,
+                'username': player.user.username,
+                'email': player.user.email,
+                'balance': str(player.balance),
+                'currency': player.currency,
+                'status': player.status,
+                'created_at': player.created_at,
+                'name': player.name,
+                'last_name': player.last_name,
+                'phone': player.phone,
+                'identification': player.identification,
+                'total_wins': str(player.total_wins) if hasattr(player, 'total_wins') else "0",
+                'total_losses': str(player.total_losses) if hasattr(player, 'total_losses') else "0",
+                'player_name': f"{player.name} {player.last_name}" if player.name and player.last_name else player.user.username
+            })
+        except Player.DoesNotExist:
+            return Response({
+                'success': False,
+                'error': 'Perfil de jugador no encontrado',
+                'detail': 'No existe un perfil de jugador para este usuario'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'success': False,
+                'error': 'No se pudo obtener el perfil',
+                'detail': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def scan_qr(request):
@@ -264,17 +329,101 @@ def update_balance(request, player_id):
             status=status.HTTP_400_BAD_REQUEST
         )
 
+# ============ ENDPOINTS DIRECTO PARA REACT ============
+
+# En views.py de players
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
-def my_balance(request):
+def get_my_balance(request):
     """
-    Obtener el saldo del jugador autenticado
+    Obtener balance del jugador actual - Endpoint directo para React
+    """
+    try:
+        print(f"🔍 DEBUG: Usuario autenticado: {request.user.username}")
+        
+        # Verificar si el usuario tiene un Player
+        if not hasattr(request.user, 'player'):
+            print(f"❌ ERROR: Usuario {request.user.username} no tiene objeto Player")
+            return Response({
+                'success': False,
+                'error': 'Perfil de jugador no encontrado',
+                'detail': 'No existe un perfil de jugador para este usuario'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        player = request.user.player
+        print(f"✅ Player encontrado: ID={player.id}, Balance={player.balance}")
+        
+        # Usar getattr para evitar errores con campos que puedan no existir
+        return Response({
+            'success': True,
+            'balance': str(player.balance) if player.balance is not None else "0.00",
+            'currency': getattr(player, 'currency', 'USD'),  # Campo opcional
+            'player_id': player.id,
+            'username': player.user.username,
+            'player_name': f"{player.name} {player.last_name}".strip() or player.user.username
+        })
+        
+    except Exception as e:
+        print(f"🔥 EXCEPCIÓN en get_my_balance: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return Response({
+            'success': False,
+            'error': 'No se pudo obtener el balance',
+            'detail': str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def get_my_profile(request):
+    """
+    Obtener perfil completo del jugador - Endpoint directo para React
     """
     try:
         player = Player.objects.get(user=request.user)
         return Response({
-            'balance': str(player.balance),  # Mantener como string para precisión
-            'player_name': f"{player.name} {player.last_name}"
+            'success': True,
+            'id': player.id,
+            'username': player.user.username,
+            'email': player.user.email,
+            'balance': str(player.balance),
+            'currency': player.currency,
+            'status': player.status,
+            'created_at': player.created_at,
+            'name': player.name,
+            'last_name': player.last_name,
+            'phone': player.phone,
+            'identification': player.identification,
+            'total_wins': str(player.total_wins) if hasattr(player, 'total_wins') else "0",
+            'total_losses': str(player.total_losses) if hasattr(player, 'total_losses') else "0",
+            'player_name': f"{player.name} {player.last_name}" if player.name and player.last_name else player.user.username
+        })
+    except Player.DoesNotExist:
+        return Response({
+            'success': False,
+            'error': 'Perfil de jugador no encontrado',
+            'detail': 'No existe un perfil de jugador para este usuario'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({
+            'success': False,
+            'error': 'No se pudo obtener el perfil',
+            'detail': str(e)
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+# Ya tienes este endpoint, pero lo mantenemos por compatibilidad
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def my_balance(request):
+    """
+    Obtener el saldo del jugador autenticado - Mantenido por compatibilidad
+    """
+    try:
+        player = Player.objects.get(user=request.user)
+        return Response({
+            'balance': str(player.balance),
+            'player_name': f"{player.name} {player.last_name}" if player.name and player.last_name else player.user.username
         })
     except Player.DoesNotExist:
         return Response(

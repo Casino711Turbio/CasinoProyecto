@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Home.css';
-// IMPORTANTE: Asegúrate de que esta imagen exista en src/assets/Hero.jpeg
 import heroImage from '../assets/Hero.jpeg'; 
 
 const Home = () => {
     const [apiStatus, setApiStatus] = useState("Conectando con el servidor...");
     const [showStaffMenu, setShowStaffMenu] = useState(false);
+    const navigate = useNavigate(); // Añadido: hook para navegación
 
     // Conexión con el Backend (Endpoint '/' que devuelve API info)
     useEffect(() => {
         const checkBackend = async () => {
         try {
             const response = await axios.get('http://localhost:8000/');
-            // Tu view devuelve: {"message": "Bienvenido a CasinoChill API", ...}
             setApiStatus(response.data.message || "Sistema En Línea");
         } catch (error) {
             setApiStatus("Servidor Offline - Revise conexión");
@@ -36,7 +35,8 @@ const Home = () => {
     };
 
     const handleStaffRole = (role) => {
-        alert(`Acceso como ${role} (en desarrollo)`);
+        // Redirige al login pasando el rol como estado
+        navigate('/login', { state: { role } });
         setShowStaffMenu(false);
     };
 
