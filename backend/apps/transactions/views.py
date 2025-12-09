@@ -3,10 +3,10 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from django.db import transaction as db_transaction, models  # Added models
-from django.db.models import F  # Added F expression
+from django.db import transaction as db_transaction, models
+from django.db.models import F
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 from decimal import Decimal
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Transaction, TransactionLimit, CancellationRequest
@@ -24,6 +24,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
+        # Manejar si el usuario no tiene player
+        if not hasattr(user, 'player'):
+            return Transaction.objects.none()
+            
         if user.is_staff:
             return Transaction.objects.all().order_by('-created_at')
         return Transaction.objects.filter(player=user.player).order_by('-created_at')
@@ -39,36 +43,56 @@ class TransactionViewSet(viewsets.ModelViewSet):
     @db_transaction.atomic
     def create_deposit(self, request):
         """Crear un depósito ficticio"""
+        print(f"🟢 CREATE_DEPOSIT llamado por: {request.user.username}")
+        print(f"📥 Datos recibidos: {request.data}")
+        
+        # Verificar que el usuario tenga player
+        if not hasattr(request.user, 'player'):
+            return Response(
+                {'error': 'Usuario no tiene perfil de jugador'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         serializer = DepositSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
+            print(f"✅ Serializador válido: {serializer.validated_data}")
             player = request.user.player
             
             # Convertir amount a Decimal
             amount = Decimal(str(serializer.validated_data['amount']))
+            print(f"💰 Monto a depositar: {amount}")
             
+            # ✅ TEMPORAL: Desactivar límites para desarrollo
             # Validar límites
-            if not self._check_limits(player, 'deposit', amount):
-                return Response(
-                    {'error': 'Límite de depósito excedido'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # if not self._check_limits(player, 'deposit', amount):
+            #     return Response(
+            #         {'error': 'Límite de depósito excedido'}, 
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
             
             # Crear transacción
             transaction_data = serializer.validated_data.copy()
             transaction_data['amount'] = amount
+            transaction_data['currency'] = transaction_data.get('currency', 'USD')
+            
+            print(f"📝 Creando transacción con datos: {transaction_data}")
+            
             transaction_obj = Transaction.objects.create(
                 player=player,
                 transaction_type='deposit',
                 **transaction_data
             )
             
+            print(f"✅ Transacción creada: ID {transaction_obj.id}")
+            
             # Actualizar balance del jugador de forma atómica
             Player.objects.filter(id=player.id).update(
                 balance=F('balance') + amount
             )
             
+            # ✅ TEMPORAL: No actualizar límites
             # Actualizar límites
-            self._update_limits(player, 'deposit', amount)
+            # self._update_limits(player, 'deposit', amount)
             
             # Procesar transacción
             transaction_obj.status = 'completed'
@@ -78,24 +102,39 @@ class TransactionViewSet(viewsets.ModelViewSet):
             
             # Obtener el jugador actualizado
             player.refresh_from_db()
+            print(f"💰 Nuevo balance: {player.balance}")
             
             return Response({
                 **TransactionSerializer(transaction_obj).data,
-                'new_balance': str(player.balance)  # Mantener como string para precisión
+                'new_balance': str(player.balance),
+                'message': f'Depósito de ${amount:.2f} realizado exitosamente'
             })
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            print(f"❌ Errores del serializador: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
     @db_transaction.atomic
     def create_withdrawal(self, request):
         """Crear un retiro ficticio"""
+        print(f"🟢 CREATE_WITHDRAWAL llamado por: {request.user.username}")
+        print(f"📥 Datos recibidos: {request.data}")
+        
+        # Verificar que el usuario tenga player
+        if not hasattr(request.user, 'player'):
+            return Response(
+                {'error': 'Usuario no tiene perfil de jugador'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         serializer = WithdrawalSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
+            print(f"✅ Serializador válido: {serializer.validated_data}")
             player = request.user.player
             
             # Convertir amount a Decimal
             amount = Decimal(str(serializer.validated_data['amount']))
+            print(f"💰 Monto a retirar: {amount}")
             
             # Validar saldo suficiente de forma atómica
             if not Player.objects.filter(id=player.id, balance__gte=amount).exists():
@@ -104,21 +143,28 @@ class TransactionViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            # ✅ TEMPORAL: Desactivar límites para desarrollo
             # Validar límites
-            if not self._check_limits(player, 'withdrawal', amount):
-                return Response(
-                    {'error': 'Límite de retiro excedido'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # if not self._check_limits(player, 'withdrawal', amount):
+            #     return Response(
+            #         {'error': 'Límite de retiro excedido'}, 
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
             
             # Crear transacción
             transaction_data = serializer.validated_data.copy()
             transaction_data['amount'] = amount
+            transaction_data['currency'] = transaction_data.get('currency', 'USD')
+            
+            print(f"📝 Creando transacción con datos: {transaction_data}")
+            
             transaction_obj = Transaction.objects.create(
                 player=player,
                 transaction_type='withdrawal',
                 **transaction_data
             )
+            
+            print(f"✅ Transacción creada: ID {transaction_obj.id}")
             
             # Validar autorización si es requerida
             if amount > Decimal('1000'):
@@ -148,21 +194,31 @@ class TransactionViewSet(viewsets.ModelViewSet):
             transaction_obj.processed_by = request.user
             transaction_obj.save()
             
+            # ✅ TEMPORAL: No actualizar límites
             # Actualizar límites
-            self._update_limits(player, 'withdrawal', amount)
+            # self._update_limits(player, 'withdrawal', amount)
             
             # Obtener el jugador actualizado
             player.refresh_from_db()
+            print(f"💰 Nuevo balance: {player.balance}")
             
             return Response({
                 **TransactionSerializer(transaction_obj).data,
-                'new_balance': str(player.balance)  # Mantener como string para precisión
+                'new_balance': str(player.balance),
+                'message': f'Retiro de ${amount:.2f} realizado exitosamente'
             })
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            print(f"❌ Errores del serializador: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def _check_limits(self, player, transaction_type, amount):
         """Validar límites de transacción - MODO SEGURO"""
+        # ✅ TEMPORAL: Desactivar límites para desarrollo
+        print(f"⚠️ LÍMITES DESACTIVADOS TEMPORALMENTE para desarrollo")
+        return True
+        
+        # Código original (comentado):
+        """
         today = timezone.now().date()
         
         try:
@@ -172,7 +228,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 period='daily',
                 transaction_type=transaction_type,
                 defaults={
-                    'max_amount': Decimal('5000'),
+                    'max_amount': Decimal('999999'),  # Límite alto para desarrollo
                     'current_amount': Decimal('0'),
                     'period_start': today,
                     'period_end': today + timedelta(days=1)
@@ -185,6 +241,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 daily_limit.period_start = today
                 daily_limit.period_end = today + timedelta(days=1)
                 daily_limit.save()
+            
+            print(f"📊 Límite diario: {daily_limit.current_amount}/{daily_limit.max_amount}")
             
             if daily_limit.current_amount + amount > daily_limit.max_amount:
                 return False
@@ -199,7 +257,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 period='monthly',
                 transaction_type=transaction_type,
                 defaults={
-                    'max_amount': Decimal('50000'),
+                    'max_amount': Decimal('9999999'),  # Límite alto para desarrollo
                     'current_amount': Decimal('0'),
                     'period_start': month_start,
                     'period_end': month_end
@@ -213,17 +271,26 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 monthly_limit.period_end = month_end
                 monthly_limit.save()
             
+            print(f"📊 Límite mensual: {monthly_limit.current_amount}/{monthly_limit.max_amount}")
+            
             if monthly_limit.current_amount + amount > monthly_limit.max_amount:
                 return False
             
             return True
             
         except Exception as e:
+            print(f"❌ Error en _check_limits: {e}")
             # MODO SEGURO: En caso de error, rechazar la transacción
             return False
+        """
 
     def _update_limits(self, player, transaction_type, amount):
         """Actualizar límites de transacción de forma atómica"""
+        # ✅ TEMPORAL: No actualizar límites para desarrollo
+        pass
+        
+        # Código original (comentado):
+        """
         today = timezone.now().date()
         
         try:
@@ -253,7 +320,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
             
         except Exception as e:
             # Log the error but don't fail the transaction
-            pass
+            print(f"⚠️ Error en _update_limits: {e}")
+        """
 
 
 class CancellationRequestViewSet(viewsets.ModelViewSet):
@@ -341,6 +409,10 @@ class TransactionHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
+        # Manejar si el usuario no tiene player
+        if not hasattr(user, 'player'):
+            return Transaction.objects.none()
+            
         queryset = Transaction.objects.filter(player=user.player)
         
         # Filtros adicionales por fecha
@@ -357,6 +429,19 @@ class TransactionHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['get'])
     def summary(self, request):
         """Resumen de transacciones por período"""
+        # Manejar si el usuario no tiene player
+        if not hasattr(request.user, 'player'):
+            return Response({
+                'period': {'start_date': None, 'end_date': None},
+                'summary': {
+                    'total_deposits': "0",
+                    'total_withdrawals': "0",
+                    'total_wins': "0",
+                    'total_losses': "0",
+                    'transaction_count': 0
+                }
+            })
+            
         player = request.user.player
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
@@ -379,7 +464,7 @@ class TransactionHistoryViewSet(viewsets.ReadOnlyModelViewSet):
                 'end_date': end_date
             },
             'summary': {
-                'total_deposits': str(sum(d.amount for d in deposits)),  # Mantener como string
+                'total_deposits': str(sum(d.amount for d in deposits)),
                 'total_withdrawals': str(sum(w.amount for w in withdrawals)),
                 'total_wins': str(sum(win.amount for win in wins)),
                 'total_losses': str(sum(loss.amount for loss in losses)),
