@@ -166,5 +166,9 @@ API disponible en `http://localhost:8000/api/`
 ## 🧑‍💻 Autores
 
 **Equipo Casino711Turbio**
+Frank
+Rafa
+Paolo
+Maestro
 - GitHub: [@Casino711Turbio](https://github.com/Casino711Turbio)
 - Proyecto universitario — Sistema de gestión de casino
