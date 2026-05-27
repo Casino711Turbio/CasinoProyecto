@@ -11,3 +11,4 @@ python-dotenv==1.0.0
 qrcode==8.2
 setuptools==80.9.0
 sqlparse==0.5.3
+django-extensions

@@ -1,0 +1,513 @@
+/* SlotMachine.css - Estilo Profesional de Casino */
+
+.slot-machine-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 15px solid #8b4513;
+    border-radius: 25px;
+    box-shadow: 
+        0 0 50px rgba(212, 175, 55, 0.5),
+        inset 0 0 30px rgba(0, 0, 0, 0.8);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efecto de luces de neón alrededor */
+.slot-machine-container::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    background: linear-gradient(45deg, 
+        #ff0000, #ff9900, #ffff00, #33cc33, 
+        #3399ff, #cc33ff, #ff0000);
+    background-size: 400% 400%;
+    border-radius: 30px;
+    z-index: -1;
+    animation: neonGlow 3s linear infinite;
+    opacity: 0.3;
+    filter: blur(10px);
+}
+
+@keyframes neonGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Cabecera de la máquina */
+.slot-header {
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.slot-header h2 {
+    color: #d4af37;
+    font-size: 2.5rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 
+        0 0 10px rgba(212, 175, 55, 0.8),
+        0 0 20px rgba(212, 175, 55, 0.5);
+    margin: 0;
+    position: relative;
+    display: inline-block;
+}
+
+.slot-header h2::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 3px;
+    background: linear-gradient(90deg, 
+        transparent, #d4af37, transparent);
+}
+
+/* Contenedor de rodillos */
+.reels-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 40px 0;
+    perspective: 1000px;
+}
+
+/* Rodillos individuales */
+.reel {
+    width: 150px;
+    height: 180px;
+    background: linear-gradient(145deg, #1e1e1e, #2d2d2d);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    border: 5px solid #444;
+    box-shadow: 
+        inset 0 0 20px rgba(0, 0, 0, 0.8),
+        0 10px 20px rgba(0, 0, 0, 0.6);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efecto 3D en los rodillos */
+.reel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, 
+        rgba(255,255,255,0.1) 0%, 
+        transparent 100%);
+    border-radius: 15px 15px 0 0;
+}
+
+.reel::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(0deg, 
+        rgba(0,0,0,0.4) 0%, 
+        transparent 100%);
+    border-radius: 0 0 15px 15px;
+}
+
+/* Ventana del rodillo */
+.reel-inner {
+    width: 130px;
+    height: 160px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    border: 3px solid #d4af37;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9);
+}
+
+/* Animación de giro */
+@keyframes spin {
+    0% { transform: translateY(0) rotateX(0); }
+    100% { transform: translateY(-1000px) rotateX(720deg); }
+}
+
+.reel.spinning {
+    animation: spin 0.1s linear infinite;
+}
+
+/* Efecto de parada */
+@keyframes bounceStop {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.reel.stopping {
+    animation: bounceStop 0.3s ease-in-out 3;
+}
+
+/* Controles */
+.slot-controls {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 20px;
+    padding: 25px;
+    margin-top: 30px;
+    border: 2px solid #d4af37;
+    box-shadow: 
+        inset 0 0 20px rgba(0, 0, 0, 0.5),
+        0 10px 20px rgba(0, 0, 0, 0.6);
+}
+
+.bet-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.bet-display label {
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.bet-display input {
+    width: 120px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #d4af37;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+.bet-display input:focus {
+    outline: none;
+    border-color: #f1c40f;
+    box-shadow: 
+        inset 0 0 10px rgba(0, 0, 0, 0.5),
+        0 0 20px rgba(241, 196, 15, 0.5);
+}
+
+.bet-display input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.message-display {
+    background: linear-gradient(135deg, #0f3460, #1a1a2e);
+    border: 3px solid #d4af37;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+    transition: all 0.3s ease;
+}
+
+.message-display.win {
+    color: #2ecc71;
+    border-color: #2ecc71;
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(26, 26, 46, 0.8));
+    animation: pulseWin 1s infinite;
+}
+
+.message-display.lose {
+    color: #e74c3c;
+    border-color: #e74c3c;
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), rgba(26, 26, 46, 0.8));
+}
+
+@keyframes pulseWin {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Botón de girar */
+.spin-btn {
+    width: 200px;
+    padding: 20px;
+    background: linear-gradient(135deg, #d4af37, #f1c40f, #d4af37);
+    background-size: 200% 200%;
+    border: none;
+    border-radius: 50px;
+    color: #000;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    margin: 0 auto;
+    display: block;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+        0 10px 0 #b7950b,
+        0 20px 40px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
+    animation: gradientShift 2s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.spin-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+    transform: rotate(45deg);
+    transition: all 0.5s ease;
+}
+
+.spin-btn:hover:not(:disabled) {
+    transform: translateY(-5px);
+    box-shadow: 
+        0 15px 0 #b7950b,
+        0 30px 60px rgba(0, 0, 0, 0.5);
+    background-position: 100% 50%;
+}
+
+.spin-btn:hover::before {
+    transform: rotate(45deg) translate(50%, 50%);
+}
+
+.spin-btn:active:not(:disabled) {
+    transform: translateY(5px);
+    box-shadow: 
+        0 5px 0 #b7950b,
+        0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.spin-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    animation: none;
+    transform: none;
+}
+
+/* Popup de ganancias */
+.win-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: white;
+    font-size: 4rem;
+    font-weight: bold;
+    padding: 40px 60px;
+    border-radius: 20px;
+    z-index: 1000;
+    box-shadow: 
+        0 0 50px rgba(46, 204, 113, 0.8),
+        0 20px 40px rgba(0, 0, 0, 0.6);
+    animation: 
+        winPopupAppear 0.5s ease-out,
+        winPopupFloat 2s ease-in-out 0.5s,
+        winPopupDisappear 0.5s ease-in 2.5s forwards;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    border: 5px solid white;
+}
+
+@keyframes winPopupAppear {
+    0% { 
+        transform: translate(-50%, -50%) scale(0); 
+        opacity: 0; 
+    }
+    70% { 
+        transform: translate(-50%, -50%) scale(1.2); 
+        opacity: 1; 
+    }
+    100% { 
+        transform: translate(-50%, -50%) scale(1); 
+        opacity: 1; 
+    }
+}
+
+@keyframes winPopupFloat {
+    0%, 100% { transform: translate(-50%, -50%); }
+    50% { transform: translate(-50%, -55%); }
+}
+
+@keyframes winPopupDisappear {
+    0% { 
+        transform: translate(-50%, -50%) scale(1); 
+        opacity: 1; 
+    }
+    100% { 
+        transform: translate(-50%, -50%) scale(0); 
+        opacity: 0; 
+    }
+}
+
+/* Efectos de partículas para victorias */
+.win-particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 500;
+}
+
+.particle {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: gold;
+    border-radius: 50%;
+    box-shadow: 0 0 10px gold;
+    animation: particleFloat 1s ease-out forwards;
+}
+
+@keyframes particleFloat {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Panel de información */
+.info-panel {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 30px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 15px;
+    padding: 15px;
+    border: 2px solid #444;
+}
+
+.info-item {
+    text-align: center;
+    color: #fff;
+}
+
+.info-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #d4af37;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.info-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Efecto de línea de pago */
+.payline {
+    position: absolute;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, 
+        transparent, #ff0000, transparent);
+    box-shadow: 0 0 10px #ff0000;
+    z-index: 10;
+    opacity: 0;
+}
+
+.payline.center {
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.payline.active {
+    animation: paylineFlash 0.5s ease-in-out 3;
+}
+
+@keyframes paylineFlash {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .slot-machine-container {
+        padding: 10px;
+        border-width: 10px;
+    }
+    
+    .reel {
+        width: 100px;
+        height: 120px;
+        font-size: 3.5rem;
+    }
+    
+    .reel-inner {
+        width: 90px;
+        height: 100px;
+    }
+    
+    .spin-btn {
+        width: 150px;
+        padding: 15px;
+        font-size: 1.2rem;
+    }
+    
+    .win-popup {
+        font-size: 2.5rem;
+        padding: 20px 30px;
+    }
+}
+
+/* Efecto de resplandor en símbolos especiales */
+.reel .symbol-7 {
+    color: #ff0000;
+    text-shadow: 0 0 10px #ff0000;
+}
+
+.reel .symbol-diamond {
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff;
+}
+
+.reel .symbol-bell {
+    color: #ffff00;
+    text-shadow: 0 0 10px #ffff00;
+}

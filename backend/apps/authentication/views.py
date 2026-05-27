@@ -1,7 +1,7 @@
 from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth.models import User
 from backend.apps.players.models import Player
 from backend.apps.players.serializers import PlayerSerializer
@@ -9,7 +9,66 @@ from backend.apps.memberships.models import MembershipPlan, Membership
 from django.utils import timezone
 from datetime import timedelta
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+# Serializador personalizado para JWT
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['username'] = user.username
+        token['is_staff'] = user.is_staff
+        token['is_superuser'] = user.is_superuser
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data['username'] = self.user.username
+        data['is_staff'] = self.user.is_staff
+        data['is_superuser'] = self.user.is_superuser
+        data['email'] = self.user.email
+        return data
+
+# Vista personalizada para login
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+# Vista para obtener información detallada del usuario
+class UserInfoView(APIView):
+    """
+    Devuelve información completa del usuario autenticado.
+    Distingue entre Admins (sin perfil Player) y Jugadores (con perfil Player).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        
+        # Datos base del usuario
+        data = {
+            'username': user.username,
+            'email': user.email,
+            'is_staff': user.is_staff,
+            'is_superuser': user.is_superuser,
+            'has_player_profile': False,
+            'player_id': None,
+            'full_name': f"{user.first_name} {user.last_name}".strip() or user.username
+        }
+        
+        # Verificar si tiene perfil de jugador
+        try:
+            player = Player.objects.get(user=user)
+            data['has_player_profile'] = True
+            data['player_id'] = player.id
+            data['full_name'] = f"{player.name} {player.last_name}".strip()
+        except Player.DoesNotExist:
+            # Es admin/staff sin perfil de jugador
+            pass
+            
+        return Response(data)
+
+# Las demás vistas permanecen igual...
 class RegisterView(generics.CreateAPIView):
     authentication_classes = []
     permission_classes = [permissions.AllowAny]

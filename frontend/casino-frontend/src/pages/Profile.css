@@ -1,171 +1,398 @@
 .profile-container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
-.profile-card {
-    background: var(--color-bg-card);
-    border: 1px solid rgba(212, 175, 55, 0.2);
-    border-radius: 15px;
+/* Encabezado principal del perfil */
+.profile-hero {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(0, 0, 0, 0.7) 100%);
+    border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    margin-bottom: 30px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
 }
 
-.profile-header {
-    text-align: center;
-    margin-bottom: 30px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding-bottom: 20px;
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+    flex: 1;
 }
 
 .profile-avatar {
-    font-size: 4rem;
-    background: rgba(255,255,255,0.05);
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-gold) 0%, #b8860b 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 15px;
-    border: 2px solid var(--color-gold);
+    font-size: 3rem;
+    border: 3px solid white;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
 }
 
-.profile-header h3 {
-    margin: 0;
+.profile-details {
+    flex: 1;
+}
+
+.profile-name {
+    font-size: 2rem;
+    color: white;
+    margin: 0 0 5px 0;
+    font-weight: bold;
+}
+
+.profile-username {
     color: var(--color-gold);
+    font-size: 1.1rem;
+    margin: 0 0 10px 0;
 }
 
-.role-badge {
-    background: rgba(212, 175, 55, 0.2);
-    color: var(--color-gold);
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    display: inline-block;
-    margin-top: 5px;
-}
-
-.form-section {
-    margin-bottom: 30px;
-}
-
-.form-section h4 {
-    color: var(--color-text-muted);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    font-weight: normal;
-}
-
-.form-row {
+.profile-stats {
     display: flex;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-gold);
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+/* Botones de acción */
+.profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    min-width: 200px;
+}
+
+.btn-profile-action {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-profile-action:hover {
+    background: rgba(212, 175, 55, 0.2);
+    transform: translateY(-2px);
+}
+
+.btn-profile-action.qr {
+    background: linear-gradient(135deg, var(--color-gold) 0%, #b8860b 100%);
+    color: black;
+    font-weight: bold;
+    border: none;
+}
+
+.btn-profile-action.qr:hover {
+    box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+}
+
+/* Grid de secciones */
+.profile-sections {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+/* Tarjeta de información */
+.info-card {
+    background: var(--color-bg-card);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.info-card h3 {
+    color: var(--color-gold);
+    margin-bottom: 25px;
+    font-size: 1.3rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 10px;
+}
+
+/* Formulario mejorado */
+.profile-form {
+    display: grid;
     gap: 20px;
 }
 
-.profile-form .form-group {
-    flex: 1;
-    margin-bottom: 15px;
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.profile-form label {
-    display: block;
-    margin-bottom: 8px;
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group label {
     color: var(--color-text-main);
     font-size: 0.9rem;
+    font-weight: 500;
 }
 
-.profile-form input {
-    width: 100%;
-    padding: 12px;
-    background: rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 5px;
+.form-group input {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px 15px;
     color: white;
-    box-sizing: border-box;
+    font-size: 1rem;
+    transition: all 0.3s ease;
 }
 
-.profile-form input:focus {
+.form-group input:focus {
     border-color: var(--color-gold);
     outline: none;
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
 }
 
+.form-group input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Sección de contraseña */
+.password-section {
+    margin-top: 10px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.password-section h4 {
+    color: var(--color-text-muted);
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+}
+
+/* Estadísticas */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-card.gold {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(0, 0, 0, 0.3) 100%);
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+.stat-card .number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--color-gold);
+    margin-bottom: 5px;
+}
+
+.stat-card .label {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+/* Botón de guardar mejorado */
 .btn-save {
     background: linear-gradient(135deg, var(--color-gold) 0%, #b8860b 100%);
     color: black;
     border: none;
-    padding: 12px 30px;
-    border-radius: 25px;
+    padding: 15px 40px;
+    border-radius: 12px;
     font-weight: bold;
     cursor: pointer;
     font-size: 1rem;
-    transition: transform 0.2s;
+    transition: all 0.3s ease;
     width: 100%;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 .btn-save:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
 }
 
+.btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Mensajes de alerta mejorados */
 .alert-message {
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-    text-align: center;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    animation: slideIn 0.3s ease;
 }
 
-.alert-message.success {
-    background: rgba(46, 204, 113, 0.2);
-    color: #2ecc71;
-    border: 1px solid #2ecc71;
-}
-
-.alert-message.error {
-    background: rgba(231, 76, 60, 0.2);
-    color: #e74c3c;
-    border: 1px solid #e74c3c;
-}
-
-@media (max-width: 600px) {
-    .form-row {
-        flex-direction: column;
-        gap: 0;
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
-/* ESTILO DEL BOTÓN QR LLAMATIVO */
-.btn-show-qr-striking {
-    margin-top: 25px;
-    /* Degradado dorado intenso */
-    background: linear-gradient(135deg, #FFD700 0%, #FDB931 50%, #d4af37 100%);
-    background-size: 200% auto;
-    color: #000; /* Texto negro para alto contraste */
-    border: 2px solid #fff; /* Borde blanco fino para resaltar */
-    padding: 15px 40px; /* Tamaño grande */
-    border-radius: 50px;
+.alert-message.success {
+    background: rgba(46, 204, 113, 0.15);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.alert-message.error {
+    background: rgba(231, 76, 60, 0.15);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.alert-message i {
+    font-size: 1.3rem;
+}
+
+/* Sección rápida de acciones */
+.quick-actions {
+    display: grid;
+    gap: 15px;
+}
+
+.action-item {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
     cursor: pointer;
-    font-size: 1.1rem;
-    font-weight: 800; /* Negrita */
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); /* Resplandor dorado */
     transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
-/* Efecto al pasar el mouse */
-.btn-show-qr-striking:hover {
-    transform: scale(1.05); /* Crece un poco */
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.8); /* Resplandor más fuerte */
-    background-position: right center; /* Mueve el brillo */
+.action-item:hover {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: rgba(212, 175, 55, 0.3);
+    transform: translateX(5px);
 }
 
-/* Efecto al hacer clic */
-.btn-show-qr-striking:active {
-    transform: scale(0.98);
+.action-item i {
+    font-size: 1.5rem;
+    color: var(--color-gold);
+}
+
+.action-item .action-text {
+    flex: 1;
+}
+
+.action-item .title {
+    color: white;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.action-item .desc {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .profile-sections {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-hero {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .profile-info {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .profile-stats {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-hero {
+        padding: 30px 20px;
+    }
+    
+    .info-card {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5rem;
+    }
+    
+    .profile-name {
+        font-size: 1.5rem;
+    }
+    
+    .profile-stats {
+        flex-direction: column;
+        gap: 10px;
+    }
 }

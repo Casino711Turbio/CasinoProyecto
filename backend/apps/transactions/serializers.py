@@ -17,21 +17,39 @@ class TransactionSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'processed_at']
 
 class DepositSerializer(serializers.ModelSerializer):
+    currency = serializers.CharField(default='USD', required=False)  # ✅ AGREGADO
+    
     class Meta:
         model = Transaction
-        fields = ['amount', 'currency', 'origin', 'channel']
+        fields = ['amount', 'currency', 'origin', 'channel']  # ✅ INCLUYE 'currency'
     
     def validate_amount(self, value):
+        # Convertir string a Decimal si es necesario
+        if isinstance(value, str):
+            try:
+                value = Decimal(value)
+            except:
+                raise serializers.ValidationError("Monto inválido")
+        
         if value <= Decimal('0'):
             raise serializers.ValidationError("El monto debe ser mayor a 0")
         return value
 
 class WithdrawalSerializer(serializers.ModelSerializer):
+    currency = serializers.CharField(default='USD', required=False)  # ✅ AGREGADO
+    
     class Meta:
         model = Transaction
-        fields = ['amount', 'currency', 'origin', 'channel']
+        fields = ['amount', 'currency', 'origin', 'channel']  # ✅ INCLUYE 'currency'
     
     def validate_amount(self, value):
+        # Convertir string a Decimal si es necesario
+        if isinstance(value, str):
+            try:
+                value = Decimal(value)
+            except:
+                raise serializers.ValidationError("Monto inválido")
+        
         if value <= Decimal('0'):
             raise serializers.ValidationError("El monto debe ser mayor a 0")
         return value
